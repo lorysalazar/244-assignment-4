@@ -9,6 +9,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(here)
+library(NbClust)
+library(cluster)
+library(factoextra)
+library(dendextend)
+library(ggdendro)
 ```
 
 ```{r}
@@ -16,5 +21,12 @@ water_chem <- read_csv(here("data", "sbc_lter_registered_stream_chemistry.csv"))
   select(site_code, nh4_uM:spec_cond_uSpercm) %>% 
   na_if(-999)
 
+water_summary <- water_chem %>% 
+  drop_na() %>% 
+  rowwise() %>% 
+  mutate(summary = mean(
+    c_across(nh4_uM:spec_cond_uSpercm))
+    ) %>% 
+  select(site_code, summary)
 ```
 
