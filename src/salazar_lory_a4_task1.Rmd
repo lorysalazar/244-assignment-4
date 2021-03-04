@@ -1,12 +1,14 @@
 ---
-title: "Task 1"
+title: "Agglomerative hierarchical clustering"
 author: "Lory Salazar"
 date: "3/2/2021"
-output: html_document
+output: 
+  html_document: 
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(here)
 library(NbClust)
@@ -16,17 +18,57 @@ library(dendextend)
 library(ggdendro)
 ```
 
+## Hierarchial clustering of water chemistry in Santa Barbara
+In this report, we perform hierarchical clustering by complete linkage, then create a dendrogram showing multivariate clustering for water stream chemistry by site in the Santa Barbara coastal drainage area.
+
 ```{r}
+# Read in the data
 water_chem <- read_csv(here("data", "sbc_lter_registered_stream_chemistry.csv")) %>% 
   select(site_code, nh4_uM:spec_cond_uSpercm) %>% 
   na_if(-999)
 
+# Getting the average by site
 water_summary <- water_chem %>% 
-  drop_na() %>% 
   rowwise() %>% 
   mutate(summary = mean(
-    c_across(nh4_uM:spec_cond_uSpercm))
+    c_across(nh4_uM:spec_cond_uSpercm), na.rm = TRUE)
     ) %>% 
-  select(site_code, summary)
+  select(site_code, summary) %>% 
+  group_by(site_code) %>% 
+  summarise(mean = mean(summary))
 ```
 
+```{r, fig.show='hide'}
+# Scale the numeric variables (column 2, which is the mean/summary we calculated)
+water_scaled <- water_summary %>% 
+  select(2) %>% 
+  scale()
+  
+
+# Update to add rownames (site code) from our previous data set
+rownames(water_scaled) <- water_summary$site_code
+
+# Find the Euclidean distances
+euc_distance <- dist(water_scaled, method = "euclidean")
+
+# Hierarchical clustering (complete linkage)
+hc_complete <- hclust(euc_distance, method = "complete" )
+
+# Creating a basic plot (base plot):
+plot(hc_complete, cex = 0.6, hang = -1)
+```
+
+```{r}
+# Plotting using ggdendogram
+ggdendrogram(hc_complete, 
+             rotate = TRUE) +
+  theme_minimal() +
+  labs(x = "Site code",
+       title = "Multivariate clustering for stream chemistry in Santa Barbara coastal drainage") +
+  ylim(0,0.7)
+```
+
+**Figure 1.** A dendrogram describing the hierarchical clustering of the stream chemistry in Santa Barbara coastal drainage, based on site and using complete linkages. Clusters are merged by the *smallest maximum* distance between two observations in distinct clusters.
+
+## Data citation
+Santa Barbara Coastal LTER and J. Melack. 2019. SBC LTER: Land: Stream chemistry in the Santa Barbara Coastal drainage area, ongoing since 2000 ver 16. Environmental Data Initiative. https://doi.org/10.6073/pasta/67a558a24ceed9a0a5bf5e46ab841174 (Accessed 2021-03-02).
