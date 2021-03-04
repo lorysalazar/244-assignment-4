@@ -1,0 +1,26 @@
+---
+title: "Parameter Estimation"
+author: "Lory Salazar"
+date: "3/3/2021"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(here)
+library(boot)
+library(gt)
+library(patchwork)
+library(broom)
+library(nlstools)
+```
+
+```{r}
+# Read in the data
+
+fish_catch <- read.csv(here("data","fish_catch.csv"))
+```
+
