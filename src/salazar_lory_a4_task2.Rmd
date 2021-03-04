@@ -16,11 +16,53 @@ library(gt)
 library(patchwork)
 library(broom)
 library(nlstools)
+library(janitor)
 ```
 
 ```{r}
-# Read in the data
+# Read in the data and add a column to assign numerical values to the years
+fish_catch <- read.csv(here("data","fish_catch.csv"), skip = 2) %>% 
+  drop_na() %>% 
+  clean_names() %>% 
+  mutate(year_number = 0:62) 
 
-fish_catch <- read.csv(here("data","fish_catch.csv"))
+# Changing from character to numeric class
+fish_catch$wild_catch <- as.numeric(fish_catch$wild_catch)
+fish_catch$year <- as.numeric(fish_catch$year)
+
 ```
+
+```{r}
+# Creating an exploratory plot to look at fish catches over time
+ggplot(data = fish_catch, aes(x = year_number, y = wild_catch)) +
+  geom_point() +
+  theme_minimal() +
+  scale_y_continuous(breaks = c(10,20,30,40,50,60,70,80,90,100))
+
+# Finding initial estimates 
+fish_exp <- fish_catch %>% 
+  mutate(ln_wild = log(wild_catch))
+
+lm_k <- lm(ln_wild ~ year_number, data = fish_exp)
+
+# Constant level reached at around 90 = K, catch at year 0 is around 17 so A ~ (90-17)/17 ~ 4.5
+```
+
+**Figure 1.** In text below the exploratory graph: What type of relationship describes the trend? What does that look like mathematically (include an equation, possibly using LaTeX)? What are your initial estimates for the parameters in the model? 
+
+The relationship between wild catches and time is described by logistic growth, which is described mathematically as:
+
+$P(t)=\frac{K}{1+Ae^{-kt}}$
+
+Where:
+
+- $K$ is the carrying capacity
+- $A$ is $\frac{K-P_0}{P_0}$
+- $k$ is the growth rate constant
+
+Our initial estimates are: *k* is around 0.03, *K* is around 90, and *A* is around 4.5. 
+
+## non-linear least sq
+
+
 
