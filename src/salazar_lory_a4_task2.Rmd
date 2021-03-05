@@ -17,6 +17,7 @@ library(patchwork)
 library(broom)
 library(nlstools)
 library(janitor)
+library(kableExtra)
 ```
 
 ```{r}
@@ -45,12 +46,10 @@ fish_exp <- fish_catch %>%
 
 lm_k <- lm(ln_wild ~ year_number, data = fish_exp)
 
-# Constant level reached at around 90 = K, catch at year 0 is around 17 so A ~ (90-17)/17 ~ 4.5
+# Constant level reached at around 95 = K, catch at year 0 is around 17 so A ~ (95-17)/17 ~ 4.6. lm_k gives us that k = ~0.03.
 ```
 
-**Figure 1.** In text below the exploratory graph: What type of relationship describes the trend? What does that look like mathematically (include an equation, possibly using LaTeX)? What are your initial estimates for the parameters in the model? 
-
-The relationship between wild catches and time is described by logistic growth, which is described mathematically as:
+**Figure 1.** The relationship between wild catches and time is described by logistic growth, which is described mathematically as:
 
 $P(t)=\frac{K}{1+Ae^{-kt}}$
 
@@ -60,9 +59,59 @@ Where:
 - $A$ is $\frac{K-P_0}{P_0}$
 - $k$ is the growth rate constant
 
-Our initial estimates are: *k* is around 0.03, *K* is around 90, and *A* is around 4.5. 
+Our initial estimates are: *k* is around 0.03, *K* is around 95, and *A* is around 4.6. 
 
-## non-linear least sq
+### Using nonlinear least squares to find parameters
+
+```{r, results='hide'}
+# Using our estimates to run the model
+fish_nls <- nls(wild_catch ~ K/(1 + A*exp(-r*year_number)),
+              data = fish_catch,
+              start = list(K = 95, A = 4.6, r = 0.03),
+              trace = TRUE
+              )
+
+# Get a summary of the model
+summary(fish_nls)
+
+# And use broom to see it in a better format
+model_out <- broom::tidy(fish_nls) 
+```
 
 
+```{r}
+# Using kable to present a nicer looking table
+model_out %>% 
+  mutate(p.value = case_when(
+    p.value < 0.0001 ~ "< 0.0001"
+  )) %>% 
+  kbl(col.names = c("Term",
+                    "Estimate",
+                    "Standard error",
+                    "Statistic",
+                    "P value")) %>% 
+  kable_styling(bootstrap_options = "striped") 
+
+```
+
+
+Based on these values, our model is:
+
+$$P(t) = \frac{100.23}{1+4.32e^{0.070t}}$$
+
+```{r}
+# Making predictions first to be used in a plot comparing our model with the OG data and then binding them
+predict <- predict(fish_nls)
+
+fish_complete <- data.frame(fish_catch, predict)
+
+# Making a plot!
+ggplot(data = fish_complete, aes(x = year_number, y = wild_catch)) +
+  geom_point() +
+  geom_line(aes(x = year_number, y = predict)) +
+  theme_minimal() +
+  labs(x = "Time (years 0 - 62)",
+       y = "Wild fish catch",
+       title = "Increase in global wild fish catch, 1950-2012")
+```
 
