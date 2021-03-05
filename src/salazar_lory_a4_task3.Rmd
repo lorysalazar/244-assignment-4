@@ -1,0 +1,24 @@
+---
+title: "Bootstrapping"
+author: "Lory Salazar"
+date: "3/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+# First creating a row for those who responded whether they experienced exclusionary, offensive, hostile, or intimidating conduct
+conduct <- rep(c("yes","no"), times = c(22,14)) 
+
+# Then making a row for those who said the conduct they faced was due to gender identity 
+bc_gender <- rep(c("yes","no",""), times = c(19,3,14))
+
+df <- data.frame(conduct, bc_gender)
+
+
+```
+
