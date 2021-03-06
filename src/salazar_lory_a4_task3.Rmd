@@ -8,17 +8,52 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(boot)
 ```
 
 ```{r}
 # First creating a row for those who responded whether they experienced exclusionary, offensive, hostile, or intimidating conduct
-conduct <- rep(c("yes","no"), times = c(22,14)) 
+conduct <- rep(c(0,1), times = c(14,22))
 
-# Then making a row for those who said the conduct they faced was due to gender identity 
-bc_gender <- rep(c("yes","no",""), times = c(19,3,14))
+# Then turning it into a data frame 
+df <- data.frame(conduct)
+```
 
-df <- data.frame(conduct, bc_gender)
+```{r}
+# Creating a function to calculate the proportions of each bootstrapped sample
+prop_fun <- function(x,i) {sum(x[i]==1)/length(x)}
+
+# Creating 10,000 bootstrap samples by resampling from the conduct vector, using the function to calculate the mean of each:
+boot_10k <- boot(conduct, 
+                 statistic = prop_fun, 
+                 R = 10000)
+
+boot_10k
+
+boot_10k_df <- data.frame(bs_prop = boot_10k$t)
+
+ggplot(data = boot_10k_df, aes(x = bs_prop)) +
+  geom_histogram() +
+  theme_minimal() +
+  labs(title = "Proportion of nonbinary/genderqueer students experiencing exclusionary, hostile,\nor intimidating experience at UCSB",
+       x = "Proportion of nonbinary/genderqueer students",
+       y = "Counts")
 
 
 ```
+
+**Figure 1.** INSERT CAPTION LATER
+
+```{r}
+boot.ci(boot_10k, conf = 0.95, type = "perc")
+
+# Intervals: 
+# Level     Percentile     
+# 95%       ( 0.4444,  0.7778 )  
+```
+
+For a 95% confidence interval, we expect that if we calculated 100 CIs, 95 of 100 calculated confidence intervals will contain the actual population parameter.
+
+This means that for our confidence interval, (0.4, 0.8), we are 95% confident that it contains the true proportion of nonbinary/genderqueer individuals who experienced misconduct at UCSB.
+
 
