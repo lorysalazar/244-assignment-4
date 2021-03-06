@@ -2,11 +2,13 @@
 title: "Bootstrapping"
 author: "Lory Salazar"
 date: "3/4/2021"
-output: html_document
+output: 
+  html_document: 
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(tidyverse)
 library(boot)
 ```
@@ -28,8 +30,6 @@ boot_10k <- boot(conduct,
                  statistic = prop_fun, 
                  R = 10000)
 
-boot_10k
-
 boot_10k_df <- data.frame(bs_prop = boot_10k$t)
 
 ggplot(data = boot_10k_df, aes(x = bs_prop)) +
@@ -42,18 +42,13 @@ ggplot(data = boot_10k_df, aes(x = bs_prop)) +
 
 ```
 
-**Figure 1.** INSERT CAPTION LATER
+**Figure 1.** Counts of proportions of nonbinary/genderqueer students at UCSB who responded "yes" in a survey asking if they had personally experienced “exclusionary, offensive, hostile or intimidating conduct”.
 
 ```{r}
 boot.ci(boot_10k, conf = 0.95, type = "perc")
-
-# Intervals: 
-# Level     Percentile     
-# 95%       ( 0.4444,  0.7778 )  
 ```
 
-For a 95% confidence interval, we expect that if we calculated 100 CIs, 95 of 100 calculated confidence intervals will contain the actual population parameter.
 
-This means that for our confidence interval, (0.4, 0.8), we are 95% confident that it contains the true proportion of nonbinary/genderqueer individuals who experienced misconduct at UCSB.
+We used bootstrapping to create resamples with replacement to find a sampling distribution that is based on more than one sample. From the created distribution, we found a 95% confidence interval of (0.4, 0.8). This means that we are 95% confident that the true proportion of nonbinary/genderqueer individuals who experienced misconduct at UCSB is contained within (0.4, 0.8).
 
 
